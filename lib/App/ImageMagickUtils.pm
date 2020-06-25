@@ -120,7 +120,7 @@ sub downsize_image {
         }
 
         #my $res = Filename::Image::check_image_filename(filename => $file);
-        my ($width, $height, $fmt) = @_;
+        my ($width, $height, $fmt) = Image::Size::imgsize($file);
         unless ($width) {
             log_error "Filename '%s' is not image (%s), skipped", $file, $fmt;
             next;
@@ -132,6 +132,7 @@ sub downsize_image {
         );
 
         my $downsized;
+        #say "D:downsize_to=<$downsize_to>, width=<$width>, height=<$height>, q=<$q>";
       DOWNSIZE: {
             last unless $downsize_to;
             my $ratio;
