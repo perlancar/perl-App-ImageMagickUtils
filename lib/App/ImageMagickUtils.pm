@@ -1,16 +1,16 @@
 package App::ImageMagickUtils;
 
-# AUTHORITY
-# DATE
-# DIST
-# VERSION
-
 use 5.010001;
 use strict;
 use warnings;
 use Log::ger;
 
 use Perinci::Exporter;
+
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
 
 our %SPEC;
 
@@ -168,6 +168,100 @@ sub downsize_image {
     }
 
     [200];
+}
+
+$SPEC{convert_image_to} = {
+    v => 1.1,
+    summary => 'Convert images using ImageMagick\'s \'convert\' utility, with multiple file support and automatic output naming',
+    description => <<'_',
+
+This is a simple wrapper to ImageMagick's `convert` utility to let you process
+multiple files using a single command:
+
+    % convert-image-to --to pdf *.jpg
+
+is basically equivalent to:
+
+    % for f in *.jpg; do convert "$f" "$f.pdf"; done
+
+_
+    args => {
+        %arg0_files,
+        to => {
+            schema => ['str*', match=>qr/\A\w+\z/],
+            req => 1,
+            examples => [qw/pdf jpg png/], # for tab completion
+        },
+    },
+    #features => {
+    #    dry_run => 1,
+    #},
+    deps => {
+        prog => 'convert',
+    },
+    examples => [
+    ],
+};
+sub convert_image_to {
+    require IPC::System::Options;
+    require Perinci::Object;
+    require Process::Status;
+
+    my %args = @_;
+
+    my $to = $args{to} or return [400, "Please specify target format in `to`"];
+
+    my $envres = Perinci::Object::envresmulti();
+    for my $file (@{$args{files}}) {
+        log_info "Processing file %s ...", $file;
+        IPC::System::Options::system(
+            {log=>1},
+            "convert", $file, "$file.$to",
+        );
+        my $ps = Process::Status->new;
+
+        if ($ps->is_success) {
+            $envres->add_result(200, "OK", {item_id=>$file});
+        } else {
+            $envres->add_result(500, "Failed (exit code ".$ps->exitstatus.")", {item_id=>$file});
+        }
+    }
+    $envres->as_struct;
+}
+
+$SPEC{convert_image_to_pdf} = {
+    v => 1.1,
+    summary => 'Convert images to PDF using ImageMagick\'s \'convert\' utility',
+    description => <<'_',
+
+This is a wrapper to `convert-image-to`, with `--to` set to `pdf`:
+
+    % convert-image-to-pdf *.jpg
+
+is equivalent to:
+
+    % convert-image-to --to pdf *.jpg
+
+which in turn is equivalent to:
+
+    % for f in *.jpg; do convert "$f" "$f.pdf"; done
+
+_
+    args => {
+        %arg0_files,
+    },
+    #features => {
+    #    dry_run => 1,
+    #},
+    deps => {
+        prog => 'convert',
+    },
+    examples => [
+    ],
+};
+sub convert_image_to_pdf {
+    my %args = @_;
+    convert_image_to(%args, to=>'pdf');
 }
 
 1;
