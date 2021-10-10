@@ -1,3 +1,16 @@
+0.005   2021-10-05  Released-By: PERLANCAR; Urgency: medium
+
+	- Add utilities: convert-image-to, convert-image-to-pdf.
+
+
+0.004   2020-12-24  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - [build] Rebuild with new Math::Image::CalcResized (0.004) to mention
+          'imgsize' script.
+
+
 0.003   2020-09-23  Released-By: PERLANCAR; Urgency: medium
 
 	- Add CLI: image-resize-notation-to-human.
