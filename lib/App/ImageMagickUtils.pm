@@ -19,7 +19,7 @@ $SPEC{':package'} = {
     summary => 'Utilities related to ImageMagick',
 };
 
-our %arg0_files = (
+our %argspec0_files = (
     files => {
         'x.name.is_plural' => 1,
         'x.name.singular' => 'file',
@@ -27,6 +27,13 @@ our %arg0_files = (
         req => 1,
         pos => 0,
         slurpy => 1,
+    },
+);
+
+our %argspecopt_delete_original = (
+    delete_original => {
+        schema => 'bool*',
+        cmdline_aliases => {D=>{}},
     },
 );
 
@@ -52,7 +59,7 @@ or (if downsizing is done):
 
 _
     args => {
-        %arg0_files,
+        %argspec0_files,
         q => {
             schema => ['int*', between=>[0,100]],
             default => 40,
@@ -74,10 +81,7 @@ _
                 no_downsize   => {summary=>"Alias for --downsize-to ''", is_flag=>1, code=>sub {$_[0]{downsize_to} = ''}},
             },
         },
-        delete_original => {
-            schema => 'bool*',
-            cmdline_aliases => {D=>{}},
-        },
+        %argspecopt_delete_original,
     },
     features => {
         dry_run => 1,
@@ -199,12 +203,13 @@ is basically equivalent to:
 
 _
     args => {
-        %arg0_files,
+        %argspec0_files,
         to => {
             schema => ['str*', match=>qr/\A\w+\z/],
             req => 1,
             examples => [qw/pdf jpg png/], # for tab completion
         },
+        %argspecopt_delete_original,
     },
     #features => {
     #    dry_run => 1,
@@ -235,6 +240,11 @@ sub convert_image_to {
 
         if ($ps->is_success) {
             $envres->add_result(200, "OK", {item_id=>$file});
+            if ($args{delete_original}) {
+                # currently we ignore the result of deletion
+                log_trace "Deleting original file %s ...", $file;
+                unlink $file;
+            }
         } else {
             $envres->add_result(500, "Failed (exit code ".$ps->exitstatus.")", {item_id=>$file});
         }
@@ -261,7 +271,8 @@ which in turn is equivalent to:
 
 _
     args => {
-        %arg0_files,
+        %argspec0_files,
+        %argspecopt_delete_original,
     },
     #features => {
     #    dry_run => 1,
