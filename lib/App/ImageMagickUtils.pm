@@ -279,3 +279,9 @@ sub convert_image_to_pdf {
 
 1;
 # ABSTRACT:
+
+=head1 DESCRIPTION
+
+This distribution includes the following CLI utilities related to ImageMagick:
+
+# INSERT_EXECS_LIST
