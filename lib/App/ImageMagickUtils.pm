@@ -74,6 +74,10 @@ _
                 no_downsize   => {summary=>"Alias for --downsize-to ''", is_flag=>1, code=>sub {$_[0]{downsize_to} = ''}},
             },
         },
+        delete_original => {
+            schema => 'bool*',
+            cmdline_aliases => {D=>{}},
+        },
     },
     features => {
         dry_run => 1,
@@ -87,8 +91,8 @@ _
             'x.doc.show_result' => 0,
         },
         {
-            summary => 'Do not downsize, just recompress to JPEG quality 40',
-            src => 'downsize-image --dont-downsize *',
+            summary => 'Do not downsize, just recompress to JPEG quality 40, delete original files',
+            src => 'downsize-image --dont-downsize --delete-original *',
             src_plang => 'bash',
             test => 0,
             'x.doc.show_result' => 0,
@@ -111,8 +115,10 @@ sub downsize_image {
         return [400, "convert path $convert_path is not executable"] unless -x $convert_path;
     }
 
+    my ($num_files, $num_success) = (0, 0);
     for my $file (@{$args{files}}) {
         log_info "Processing file %s ...", $file;
+        $num_files++;
 
         unless (-f $file) {
             log_error "No such file %s, skipped", $file;
@@ -164,10 +170,17 @@ sub downsize_image {
         if ($?) {
             my ($exit_code, $signal, $core_dump) = ($? < 0 ? $? : $? >> 8, $? & 127, $? & 128);
             log_error "convert for $file failed: exit_code=$exit_code, signal=$signal, core_dump=$core_dump";
+        } else {
+            if ($args{delete_original}) {
+                # currently we ignore the results
+                log_trace "Deleting original file %s ...", $file;
+                unlink $file;
+            }
+            $num_success++;
         }
     }
 
-    [200];
+    $num_success == 0 ? [500, "All files failed"] : [200];
 }
 
 $SPEC{convert_image_to} = {
