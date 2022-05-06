@@ -206,11 +206,12 @@ sub downsize_image {
             if ($args{trash_original}) {
                 require File::Trash::FreeDesktop;
                 $trash //= File::Trash::FreeDesktop->new;
+                log_info "Trashing original file %s ...", $file;
                 # will die upon failure, currently we don't trap
                 $trash->trash($file);
             } elsif ($args{delete_original}) {
                 # currently we ignore the results
-                log_trace "Deleting original file %s ...", $file;
+                log_info "Deleting original file %s ...", $file;
                 unlink $file;
             }
             $num_success++;
@@ -277,11 +278,12 @@ sub convert_image_to {
             if ($args{trash_original}) {
                 require File::Trash::FreeDesktop;
                 $trash //= File::Trash::FreeDesktop->new;
+                log_info "Trashing original file %s ...", $file;
                 # will die upon failure, currently we don't trap
                 $trash->trash($file);
             } elsif ($args{delete_original}) {
                 # currently we ignore the result of deletion
-                log_trace "Deleting original file %s ...", $file;
+                log_info "Deleting original file %s ...", $file;
                 unlink $file;
             }
         } else {
