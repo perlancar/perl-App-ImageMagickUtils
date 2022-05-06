@@ -30,7 +30,7 @@ our %argspec0_files = (
     },
 );
 
-our %argspecopt_delete_original = (
+our %argspecs_delete = (
     delete_original => {
         summary => 'Delete (unlink) the original file after downsizing',
         schema => 'bool*',
@@ -103,11 +103,11 @@ _
             cmdline_aliases => {
                 dont_downsize => {summary=>"Alias for --downsize-to ''", is_flag=>1, code=>sub {$_[0]{downsize_to} = ''}},
                 no_downsize   => {summary=>"Alias for --downsize-to ''", is_flag=>1, code=>sub {$_[0]{downsize_to} = ''}},
-                1536          => {summary=>"Shortcut for --downsize-to=1536", code=>sub {$_[0]{downsize_to} = '1536'}},
-                2048          => {summary=>"Shortcut for --downsize-to=2048", code=>sub {$_[0]{downsize_to} = '2048'}},
+                1536          => {summary=>"Shortcut for --downsize-to=1536", is_flag=>1, code=>sub {$_[0]{downsize_to} = '1536'}},
+                2048          => {summary=>"Shortcut for --downsize-to=2048", is_flag=>1, code=>sub {$_[0]{downsize_to} = '2048'}},
             },
         },
-        %argspecopt_delete_original,
+        %argspecs_delete,
     },
     args_rels => \%args_rels,
     features => {
@@ -147,6 +147,7 @@ sub downsize_image {
     }
 
     my ($num_files, $num_success) = (0, 0);
+    my $trash;
     for my $file (@{$args{files}}) {
         log_info "Processing file %s ...", $file;
         $num_files++;
@@ -204,8 +205,9 @@ sub downsize_image {
         } else {
             if ($args{trash_original}) {
                 require File::Trash::FreeDesktop;
+                $trash //= File::Trash::FreeDesktop->new;
                 # will die upon failure, currently we don't trap
-                File::Trash::FreeDesktop->new->trash($file);
+                $trash->trash($file);
             } elsif ($args{delete_original}) {
                 # currently we ignore the results
                 log_trace "Deleting original file %s ...", $file;
@@ -240,7 +242,7 @@ _
             req => 1,
             examples => [qw/pdf jpg png/], # for tab completion
         },
-        %argspecopt_delete_original,
+        %argspecs_delete,
     },
     #features => {
     #    dry_run => 1,
@@ -261,6 +263,7 @@ sub convert_image_to {
     my $to = $args{to} or return [400, "Please specify target format in `to`"];
 
     my $envres = Perinci::Object::envresmulti();
+    my $trash;
     for my $file (@{$args{files}}) {
         log_info "Processing file %s ...", $file;
         IPC::System::Options::system(
@@ -271,7 +274,12 @@ sub convert_image_to {
 
         if ($ps->is_success) {
             $envres->add_result(200, "OK", {item_id=>$file});
-            if ($args{delete_original}) {
+            if ($args{trash_original}) {
+                require File::Trash::FreeDesktop;
+                $trash //= File::Trash::FreeDesktop->new;
+                # will die upon failure, currently we don't trap
+                $trash->trash($file);
+            } elsif ($args{delete_original}) {
                 # currently we ignore the result of deletion
                 log_trace "Deleting original file %s ...", $file;
                 unlink $file;
@@ -303,7 +311,7 @@ which in turn is equivalent to:
 _
     args => {
         %argspec0_files,
-        %argspecopt_delete_original,
+        %argspecs_delete,
     },
     #features => {
     #    dry_run => 1,
