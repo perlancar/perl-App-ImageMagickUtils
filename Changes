@@ -1,3 +1,9 @@
+0.013   2022-05-06  Released-By: PERLANCAR; Urgency: medium
+
+	- [ux] [cli downsize-image] Add shortcut options --1536 and --2048
+	  for --downsize-to=1536, --downsize-to=2048, respectively.
+
+
 0.012   2022-02-10  Released-By: PERLANCAR; Urgency: low
 
         - No functional changes.
