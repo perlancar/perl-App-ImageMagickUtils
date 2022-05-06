@@ -79,6 +79,8 @@ _
             cmdline_aliases => {
                 dont_downsize => {summary=>"Alias for --downsize-to ''", is_flag=>1, code=>sub {$_[0]{downsize_to} = ''}},
                 no_downsize   => {summary=>"Alias for --downsize-to ''", is_flag=>1, code=>sub {$_[0]{downsize_to} = ''}},
+                1536          => {summary=>"Shortcut for --downsize-to=1536", code=>sub {$_[0]{downsize_to} = '1536'}},
+                2048          => {summary=>"Shortcut for --downsize-to=2048", code=>sub {$_[0]{downsize_to} = '2048'}},
             },
         },
         %argspecopt_delete_original,
