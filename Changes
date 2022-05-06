@@ -1,3 +1,11 @@
+0.014   2022-05-06  Released-By: PERLANCAR; Urgency: medium
+
+	- [bugfix] --1526 & --2048 were not flag and ate an extra argument.
+
+	- [cli downsize-image] Add option --trash-original (-T) as an
+	  alternative to --delete-original (-D).
+
+
 0.013   2022-05-06  Released-By: PERLANCAR; Urgency: medium
 
 	- [ux] [cli downsize-image] Add shortcut options --1536 and --2048
