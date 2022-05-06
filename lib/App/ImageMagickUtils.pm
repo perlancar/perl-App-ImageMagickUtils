@@ -32,9 +32,33 @@ our %argspec0_files = (
 
 our %argspecopt_delete_original = (
     delete_original => {
+        summary => 'Delete (unlink) the original file after downsizing',
         schema => 'bool*',
+        description => <<'_',
+
+See also the `trash_original` option.
+
+_
         cmdline_aliases => {D=>{}},
     },
+    trash_original => {
+        summary => 'Trash the original file after downsizing',
+        schema => 'bool*',
+        description => <<'_',
+
+This option uses the <pm:File::Trash::FreeDesktop> module to do the trashing.
+Compared to deletion, with this option you can still restore the trashed
+original files from the Trash directory.
+
+See also the `delete_original` option.
+
+_
+        cmdline_aliases => {T=>{}},
+    },
+);
+
+our %args_rels = (
+    choose_one => [qw/delete_original trash_original/],
 );
 
 sub _nearest {
@@ -85,6 +109,7 @@ _
         },
         %argspecopt_delete_original,
     },
+    args_rels => \%args_rels,
     features => {
         dry_run => 1,
     },
@@ -177,7 +202,11 @@ sub downsize_image {
             my ($exit_code, $signal, $core_dump) = ($? < 0 ? $? : $? >> 8, $? & 127, $? & 128);
             log_error "convert for $file failed: exit_code=$exit_code, signal=$signal, core_dump=$core_dump";
         } else {
-            if ($args{delete_original}) {
+            if ($args{trash_original}) {
+                require File::Trash::FreeDesktop;
+                # will die upon failure, currently we don't trap
+                File::Trash::FreeDesktop->new->trash($file);
+            } elsif ($args{delete_original}) {
                 # currently we ignore the results
                 log_trace "Deleting original file %s ...", $file;
                 unlink $file;
