@@ -1,3 +1,10 @@
+0.015   2022-05-06  Released-By: PERLANCAR; Urgency: low
+
+	- No functional changes.
+
+	- [ux] [logging] Tweak level of delete message from trace -> info.
+
+
 0.014   2022-05-06  Released-By: PERLANCAR; Urgency: medium
 
 	- [bugfix] --1526 & --2048 were not flag and ate an extra argument.
