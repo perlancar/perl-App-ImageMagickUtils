@@ -118,7 +118,21 @@ _
 By default, assuming that WhatsApp already compresses images, when given a
 filename that matches a WhatsApp image filename, e.g. `IMG-20220508-WA0001.jpg`
 (will be checked using <pm:Regexp::Pattern::Filename::Image::WhatsApp>), will
-skip downsizing.
+skip downsizing. The `--no-skip-whatsapp` option will process such filenames
+nevertheless.
+
+_
+        },
+        skip_downsized => {
+            summary => 'Skip previously downsized images',
+            'summary.alt.bool.not' => 'Do not skip previously downsized images',
+            schema => 'bool*',
+            default => 1,
+            description => <<'_',
+
+By default, when given a filename that looks like it's already downsized, e.g.
+`foo.1024-q40.jpg` or `foo.q40.jpg`, will skip downsizing. The
+`--no-skip-downsized` option will process such filenames nevertheless.
 
 _
         },
@@ -156,6 +170,7 @@ sub downsize_image {
     my $convert_path = File::Which::which("convert");
     my $downsize_to = $args{downsize_to};
     my $skip_whatsapp = $args{skip_whatsapp} // 1;
+    my $skip_downsized = $args{skip_downsized} // 1;
 
     unless ($args{-dry_run}) {
         return [400, "Cannot find convert in path"] unless defined $convert_path;
@@ -184,7 +199,14 @@ sub downsize_image {
         if ($skip_whatsapp) {
             require Regexp::Pattern::Filename::Image::WhatsApp;
             if ($file =~ $Regexp::Pattern::Filename::Image::WhatsApp::RE{filename_image_whatsapp}{pat}) {
-                log_info "Filename '%s' looks like a WhatsApp image, skip downsizing due to --skip-whatsapp option in effect", $file;
+                log_info "Filename '%s' looks like a WhatsApp image, skip downsizing due to --skip-whatsapp option is in effect", $file;
+                next FILE;
+            }
+        }
+
+        if ($skip_downsized) {
+            if ($file =~ /\.(?:\d+-)?q(?:\d{1,3})\.\w+\z/) {
+                log_info "Filename '%s' looks like it's already downsized, skip downsizing due to --skip-downsized option is in effect", $file;
                 next FILE;
             }
         }
