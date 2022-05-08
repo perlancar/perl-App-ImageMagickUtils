@@ -205,7 +205,7 @@ sub downsize_image {
         }
 
         if ($skip_downsized) {
-            if ($file =~ /\.(?:\d+-)?q(?:\d{1,3})\.\w+\z/) {
+            if ($file =~ /\.(?:\d+p?-)?q(?:\d{1,3})\.\w+\z/) {
                 log_info "Filename '%s' looks like it's already downsized, skip downsizing due to --skip-downsized option is in effect", $file;
                 next FILE;
             }
