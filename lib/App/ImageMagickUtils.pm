@@ -108,6 +108,20 @@ _
                 2048          => {summary=>"Shortcut for --downsize-to=2048", is_flag=>1, code=>sub {$_[0]{downsize_to} = '2048'}},
             },
         },
+        skip_whatsapp => {
+            summary => 'Skip WhatsApp images',
+            'summary.alt.bool.not' => 'Do not skip WhatsApp images',
+            schema => 'bool*',
+            default => 1,
+            description => <<'_',
+
+By default, assuming that WhatsApp already compresses images, when given a
+filename that matches a WhatsApp image filename, e.g. `IMG-20220508-WA0001.jpg`
+(will be checked using <pm:Regexp::Pattern::Filename::Image::WhatsApp>), will
+skip downsizing.
+
+_
+        },
         %argspecs_delete,
     },
     args_rels => \%args_rels,
@@ -141,6 +155,7 @@ sub downsize_image {
 
     my $convert_path = File::Which::which("convert");
     my $downsize_to = $args{downsize_to};
+    my $skip_whatsapp = $args{skip_whatsapp} // 1;
 
     unless ($args{-dry_run}) {
         return [400, "Cannot find convert in path"] unless defined $convert_path;
@@ -149,23 +164,32 @@ sub downsize_image {
 
     my ($num_files, $num_success) = (0, 0);
     my $trash;
+  FILE:
     for my $file (@{$args{files}}) {
         log_info "Processing file %s ...", $file;
         $num_files++;
 
         unless (-f $file) {
             log_error "No such file %s, skipped", $file;
-            next;
+            next FILE;
         }
 
         #my $res = Filename::Image::check_image_filename(filename => $file);
         my ($width, $height, $fmt) = Image::Size::imgsize($file);
         unless ($width) {
             log_error "Filename '%s' is not image (%s), skipped", $file, $fmt;
-            next;
+            next FILE;
         }
 
-        my $q = $args{q} // 40;
+        if ($skip_whatsapp) {
+            require Regexp::Pattern::Filename::Image::WhatsApp;
+            if ($file =~ $Regexp::Pattern::Filename::Image::WhatsApp::RE{filename_image_whatsapp}{pat}) {
+                log_info "Filename '%s' looks like a WhatsApp image, skip downsizing due to --skip-whatsapp option in effect", $file;
+                next FILE;
+            }
+        }
+
+        my $q = $args{quality} // 40;
         my @convert_args = (
             $file,
         );
@@ -193,7 +217,7 @@ sub downsize_image {
 
         if ($args{-dry_run}) {
             log_info "[DRY-RUN] Running $convert_path with args %s ...", \@convert_args;
-            next;
+            next FILE;
         }
 
         IPC::System::Options::system(
