@@ -84,9 +84,10 @@ or (if downsizing is done):
 _
     args => {
         %argspec0_files,
-        q => {
+        quality => {
             schema => ['int*', between=>[0,100]],
             default => 40,
+            cmdline_aliases => {q=>{}},
         },
         downsize_to => {
             schema => ['str*', in=>['', '640', '800', '1024', '1536', '2048']],
