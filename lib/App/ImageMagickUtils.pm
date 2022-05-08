@@ -239,6 +239,7 @@ sub downsize_image {
 
         if ($args{-dry_run}) {
             log_info "[DRY-RUN] Running $convert_path with args %s ...", \@convert_args;
+            $num_success++;
             next FILE;
         }
 
