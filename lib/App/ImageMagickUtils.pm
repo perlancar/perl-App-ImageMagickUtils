@@ -19,11 +19,47 @@ $SPEC{':package'} = {
     summary => 'Utilities related to ImageMagick',
 };
 
-our %argspec0_files = (
+our %argspec0plus_files = (
     files => {
         'x.name.is_plural' => 1,
         'x.name.singular' => 'file',
         schema => ['array*' => of => 'filename*'],
+        req => 1,
+        pos => 0,
+        slurpy => 1,
+    },
+);
+
+our %argspec0plus_files__comp_png = (
+    files => {
+        'x.name.is_plural' => 1,
+        'x.name.singular' => 'file',
+        schema => ['array*' => of => 'filename*'],
+        'x.completion' => [filename => {file_ext_filter=>'png'}],
+        req => 1,
+        pos => 0,
+        slurpy => 1,
+    },
+);
+
+our %argspec0plus_files__comp_jpg = (
+    files => {
+        'x.name.is_plural' => 1,
+        'x.name.singular' => 'file',
+        schema => ['array*' => of => 'filename*'],
+        'x.completion' => [filename => {file_ext_filter=>qr/^(jpe?g)$/i}],
+        req => 1,
+        pos => 0,
+        slurpy => 1,
+    },
+);
+
+our %argspec0plus_files__comp_pdf = (
+    files => {
+        'x.name.is_plural' => 1,
+        'x.name.singular' => 'file',
+        schema => ['array*' => of => 'filename*'],
+        'x.completion' => [filename => {file_ext_filter=>'pdf'}],
         req => 1,
         pos => 0,
         slurpy => 1,
@@ -57,6 +93,24 @@ _
     },
 );
 
+our %argspecopt_quality = (
+    quality => {
+        summary => 'Quality setting (for JPEG/PNG), 1 (best compression, worst quality) to 100 (least compression, best quality)',
+        schema => ['int*', between=>[0,100]],
+        default => 92,
+        cmdline_aliases => {q=>{}},
+    },
+);
+
+our %argspecopt_quality__def40 = (
+    quality => {
+        summary => 'Quality setting (for JPEG/PNG), 1 (best compression, worst quality) to 100 (least compression, best quality)',
+        schema => ['int*', between=>[0,100]],
+        default => 40,
+        cmdline_aliases => {q=>{}},
+    },
+);
+
 our %args_rels = (
     choose_one => [qw/delete_original trash_original/],
 );
@@ -83,12 +137,8 @@ or (if downsizing is done):
 
 _
     args => {
-        %argspec0_files,
-        quality => {
-            schema => ['int*', between=>[0,100]],
-            default => 40,
-            cmdline_aliases => {q=>{}},
-        },
+        %argspec0plus_files,
+        %argspecopt_quality__def40,
         downsize_to => {
             schema => ['str*', in=>['', '640', '800', '1024', '1536', '2048']],
             default => '1024',
@@ -285,7 +335,8 @@ is basically equivalent to:
 
 _
     args => {
-        %argspec0_files,
+        %argspec0plus_files,
+        %argspecopt_quality,
         to => {
             schema => ['str*', match=>qr/\A\w+\z/],
             req => 1,
@@ -317,7 +368,7 @@ sub convert_image_to {
         log_info "Processing file %s ...", $file;
         IPC::System::Options::system(
             {log=>1},
-            "convert", $file, "$file.$to",
+            "convert", ($args{quality} ? ("-quality", $args{quality}) : ()), $file, "$file.$to",
         );
         my $ps = Process::Status->new;
 
@@ -360,7 +411,7 @@ which in turn is equivalent to:
 
 _
     args => {
-        %argspec0_files,
+        %argspec0plus_files,
         %argspecs_delete,
     },
     #features => {
@@ -375,6 +426,80 @@ _
 sub convert_image_to_pdf {
     my %args = @_;
     convert_image_to(%args, to=>'pdf');
+}
+
+$SPEC{convert_image_to_jpg} = {
+    v => 1.1,
+    summary => 'Convert images to JPG using ImageMagick\'s \'convert\' utility',
+    description => <<'_',
+
+This is a wrapper to `convert-image-to`, with `--to` set to `jpg`:
+
+    % convert-image-to-pdf *.png
+
+is equivalent to:
+
+    % convert-image-to --to jpg *.png
+
+which in turn is equivalent to:
+
+    % for f in *.png; do convert "$f" "$f.jpg"; done
+
+_
+    args => {
+        %argspec0plus_files,
+        %argspecopt_quality,
+        %argspecs_delete,
+    },
+    #features => {
+    #    dry_run => 1,
+    #},
+    deps => {
+        prog => 'convert',
+    },
+    examples => [
+    ],
+};
+sub convert_image_to_jpg {
+    my %args = @_;
+    convert_image_to(%args, to=>'jpg');
+}
+
+$SPEC{convert_image_to_png} = {
+    v => 1.1,
+    summary => 'Convert images to JPG using ImageMagick\'s \'convert\' utility',
+    description => <<'_',
+
+This is a wrapper to `convert-image-to`, with `--to` set to `png`:
+
+    % convert-image-to-png *.jpg
+
+is equivalent to:
+
+    % convert-image-to --to png *.jpg
+
+which in turn is equivalent to:
+
+    % for f in *.jpg; do convert "$f" "$f.png"; done
+
+_
+    args => {
+        %argspec0plus_files,
+        %argspecopt_quality,
+        %argspecs_delete,
+    },
+    #features => {
+    #    dry_run => 1,
+    #},
+    deps => {
+        prog => 'convert',
+    },
+    examples => [
+    ],
+};
+sub convert_image_to_png {
+    my %args = @_;
+    convert_image_to(%args, to=>'png');
 }
 
 1;
