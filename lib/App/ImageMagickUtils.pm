@@ -293,8 +293,8 @@ sub downsize_image {
             next FILE;
         }
 
+        log_info "Running $convert_path with args %s ...", \@convert_args;
         IPC::System::Options::system(
-            {log=>1},
             $convert_path, @convert_args,
         );
         if ($?) {
