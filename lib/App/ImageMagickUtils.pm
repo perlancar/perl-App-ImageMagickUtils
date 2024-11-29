@@ -511,3 +511,12 @@ sub convert_image_to_png {
 This distribution includes the following CLI utilities related to ImageMagick:
 
 # INSERT_EXECS_LIST
+
+
+=head1 FAQ
+
+=head2 I got error message "attempt to perform an operation not allowed by the security policy `PDF' @ error/constitute.c/IsCoderAuthorized/426."
+
+See solutions like described in L<https://stackoverflow.com/questions/52998331/imagemagick-security-policy-pdf-blocking-conversion>
+
+=cut
